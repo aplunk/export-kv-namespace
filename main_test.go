@@ -134,9 +134,10 @@ func TestMoreCases(t *testing.T) {
 	data, err := os.ReadFile("./testdata/cases.txt")
 	require.NoError(t, err)
 
-	lines := strings.Split(string(data), "\n")
+	lines := strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
 	for i := 0; i < len(lines); i += 2 {
-		got := fixStringEncodedJsonOnly([]byte(lines[i+1]))
+		got, ok := fixStringEncodedJsonOnly([]byte(lines[i+1]))
 		require.Equal(t, lines[i], string(got))
+		require.True(t, ok)
 	}
 }

@@ -116,18 +116,15 @@ type kvClient interface {
 var jsRx = regexp.MustCompile(`^\s*["]?\s*{.*`)
 
 func fixStringEncodedJson(ctx context.Context, client kvClient, accountContainer *cloudflare.ResourceContainer, data []byte, namespace string, metadata cloudflare.StorageKey) ([]byte, error) {
-	var result json.RawMessage
-	// Handle json data which cannot be decoded
-	err := json.Unmarshal(data, &result)
-	var jsError *json.SyntaxError
-	if errors.As(err, &jsError) && jsRx.Match(data) {
+	data, changed := fixStringEncodedJsonOnly(data)
+	if changed {
 		response, err := client.WriteWorkersKVEntries(ctx, accountContainer,
 			cloudflare.WriteWorkersKVEntriesParams{
 				NamespaceID: namespace,
 				KVs: []*cloudflare.WorkersKVPair{
 					{
 						Key:        metadata.Name,
-						Value:      string(fixStringEncodedJsonOnly(data)),
+						Value:      string(data),
 						Expiration: metadata.Expiration,
 						Metadata:   metadata.Metadata,
 					},
@@ -144,7 +141,7 @@ func fixStringEncodedJson(ctx context.Context, client kvClient, accountContainer
 	return data, nil
 }
 
-func fixStringEncodedJsonOnly(data []byte) []byte {
+func fixStringEncodedJsonOnly(data []byte) ([]byte, bool) {
 	var result json.RawMessage
 	// Handle json data which cannot be decoded
 	err := json.Unmarshal(data, &result)
@@ -155,6 +152,7 @@ func fixStringEncodedJsonOnly(data []byte) []byte {
 		dStr = strings.TrimPrefix(dStr, `"`)
 		dStr = strings.TrimSuffix(dStr, `"`)
 		data = []byte(dStr)
+		return data, true
 	}
-	return data
+	return data, false
 }
