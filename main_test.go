@@ -66,6 +66,19 @@ func TestFixStringEncodedJson(t *testing.T) {
 			description: "handles nested escaped quotes",
 			input:       `"{\"test\": \"\\""}"`,
 			response:    `{"test": "\""}`,
+			called:      true,
+		},
+		{
+			description: "handles tripple slashes",
+			input:       `{\"test\": \"\\\"\"}`,
+			response:    `{"test": "\""}`,
+			called:      true,
+		},
+		{
+			description: "handles nested escaped slashes",
+			input:       `"{\"test\": \" \\\ \"}"`,
+			response:    `{"test": " \\ "}`,
+			called:      true,
 		},
 		{
 			description: "does not modify json encoded strings",

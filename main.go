@@ -121,7 +121,8 @@ func fixStringEncodedJson(ctx context.Context, client kvClient, accountContainer
 	err := json.Unmarshal(data, &result)
 	var jsError *json.SyntaxError
 	if errors.As(err, &jsError) && jsRx.Match(data) {
-		dStr := strings.ReplaceAll(string(data), "\\\"", "\"")
+		dStr := strings.ReplaceAll(string(data), `\"`, `"`)
+		dStr = strings.ReplaceAll(dStr, `\\`, `\`)
 		dStr = strings.TrimPrefix(dStr, `"`)
 		dStr = strings.TrimSuffix(dStr, `"`)
 		data = []byte(dStr)
