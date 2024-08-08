@@ -135,7 +135,7 @@ func fixStringEncodedJson(ctx context.Context, client kvClient, accountContainer
 			return nil, fmt.Errorf("error writing kv entry:%w", err)
 		}
 		if !response.Success {
-			return nil, fmt.Errorf("uncessful kv write:%+v", response)
+			return nil, fmt.Errorf("unsuccessful kv write:%+v", response)
 		}
 	}
 	return data, nil
