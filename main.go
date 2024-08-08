@@ -65,7 +65,18 @@ func main() {
 			}
 
 			if *fixStringEncodedJsonFlag {
-				data, err = fixStringEncodedJson(ctx, client, accountContainer, data, *namespace, key.Name)
+				result, err := client.ListWorkersKVKeys(ctx, accountContainer, cloudflare.ListWorkersKVsParams{Prefix: key.Name})
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				if result.Count != 1 {
+					log.Fatalf("unexpected key count:%d", result.Count)
+				}
+
+				keyMetadata := result.Result[0]
+
+				data, err = fixStringEncodedJson(ctx, client, accountContainer, data, *namespace, keyMetadata)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -99,19 +110,35 @@ type KVResult struct {
 }
 
 type kvClient interface {
-	WriteWorkersKVEntry(ctx context.Context, rc *cloudflare.ResourceContainer, params cloudflare.WriteWorkersKVEntryParams) (cloudflare.Response, error)
+	WriteWorkersKVEntries(ctx context.Context, rc *cloudflare.ResourceContainer, params cloudflare.WriteWorkersKVEntriesParams) (cloudflare.Response, error)
 }
 
-var jsRx = regexp.MustCompile(`^\s*{.*`)
+var jsRx = regexp.MustCompile(`^\s*["]?\s*{.*`)
 
-func fixStringEncodedJson(ctx context.Context, client kvClient, accountContainer *cloudflare.ResourceContainer, data []byte, namespace, key string) ([]byte, error) {
+func fixStringEncodedJson(ctx context.Context, client kvClient, accountContainer *cloudflare.ResourceContainer, data []byte, namespace string, metadata cloudflare.StorageKey) ([]byte, error) {
 	var result json.RawMessage
 	// Handle json data which cannot be decoded
 	err := json.Unmarshal(data, &result)
 	var jsError *json.SyntaxError
 	if errors.As(err, &jsError) && jsRx.Match(data) {
-		data = []byte(strings.ReplaceAll(string(data), "\\\"", "\""))
-		response, err := client.WriteWorkersKVEntry(ctx, accountContainer, cloudflare.WriteWorkersKVEntryParams{NamespaceID: namespace, Key: key, Value: data})
+		dStr := strings.ReplaceAll(string(data), "\\\"", "\"")
+		dStr = strings.TrimPrefix(dStr, `"`)
+		dStr = strings.TrimSuffix(dStr, `"`)
+		data = []byte(dStr)
+		response, err := client.WriteWorkersKVEntries(ctx, accountContainer,
+			cloudflare.WriteWorkersKVEntriesParams{
+				NamespaceID: namespace,
+				KVs: []*cloudflare.WorkersKVPair{
+					{
+						Key:        metadata.Name,
+						Value:      string(data),
+						Expiration: metadata.Expiration,
+						Metadata:   metadata.Metadata,
+					},
+				},
+			},
+		)
+		//cloudflare.WriteWorkersKVEntriesParams{Key: key, Value: data},
 		if err != nil {
 			return nil, fmt.Errorf("error writing kv entry:%w", err)
 		}
