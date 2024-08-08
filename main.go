@@ -132,7 +132,7 @@ func fixStringEncodedJson(ctx context.Context, client kvClient, accountContainer
 				KVs: []*cloudflare.WorkersKVPair{
 					{
 						Key:        metadata.Name,
-						Value:      string(data),
+						Value:      dStr,
 						Expiration: metadata.Expiration,
 						Metadata:   metadata.Metadata,
 					},
