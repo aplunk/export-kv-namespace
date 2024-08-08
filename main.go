@@ -139,7 +139,6 @@ func fixStringEncodedJson(ctx context.Context, client kvClient, accountContainer
 				},
 			},
 		)
-		//cloudflare.WriteWorkersKVEntriesParams{Key: key, Value: data},
 		if err != nil {
 			return nil, fmt.Errorf("error writing kv entry:%w", err)
 		}

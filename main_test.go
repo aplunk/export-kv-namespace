@@ -86,6 +86,13 @@ func TestFixStringEncodedJson(t *testing.T) {
 			response:    `afwfewfw\"dfawefwa`,
 			called:      false,
 		},
+
+		{
+			description: "handles quad slashes",
+			input:       `{\"test\": \" \\\\ \"}`,
+			response:    `{"test": " \\ "}`,
+			called:      true,
+		},
 	}
 
 	for _, test := range tests {
