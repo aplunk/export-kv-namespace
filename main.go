@@ -65,7 +65,7 @@ func main() {
 			}
 
 			if *fixStringEncodedJsonFlag {
-				result, err := client.ListWorkersKVKeys(ctx, accountContainer, cloudflare.ListWorkersKVsParams{Prefix: key.Name})
+				result, err := client.ListWorkersKVKeys(ctx, accountContainer, cloudflare.ListWorkersKVsParams{NamespaceID: *namespace, Prefix: key.Name})
 				if err != nil {
 					log.Fatal(err)
 				}
