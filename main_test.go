@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/cloudflare/cloudflare-go"
+	"github.com/stretchr/testify/require"
 )
 
 type testClient struct {
@@ -124,5 +127,16 @@ func TestFixStringEncodedJson(t *testing.T) {
 		if string(data) != test.response {
 			t.Fatalf("unexpected test response expected:%s actual:%s", test.response, string(data))
 		}
+	}
+}
+
+func TestMoreCases(t *testing.T) {
+	data, err := os.ReadFile("./testdata/cases.txt")
+	require.NoError(t, err)
+
+	lines := strings.Split(string(data), "\n")
+	for i := 0; i < len(lines); i += 2 {
+		got := fixStringEncodedJsonOnly([]byte(lines[i+1]))
+		require.Equal(t, lines[i], string(got))
 	}
 }
